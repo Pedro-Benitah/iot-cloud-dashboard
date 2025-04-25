@@ -2,21 +2,20 @@ syntax = "proto3";
 
 package smartenv;
 
-// Mensagem com dados do sensor (entrada do RPC)
+
 message SensorData {
-  int32 id = 1;        // identificador do sensor
-  float valor = 2;     // valor lido pelo sensor (ex.: temperatura)
+  int32 id = 1;
+  float valor = 2;
 }
 
-// Mensagem com comando para atuador (saída do RPC)
+
 message ActuatorCommand {
-  int32 id = 1;         // identificador do atuador
-  string acao = 2;      // "ON" ou "OFF"
-  bool ativar = 3;      // true = ligar, false = desligar (ou nenhuma aç\u00e3o)
+  int32 id = 1;
+  string acao = 2;
+  bool ativar = 3;
 }
 
-// Serviço gRPC para processar dados de sensor
+
 service ControladorAmbiente {
-  // RPC que recebe dados do sensor e retorna um poss\u00edvel comando de atuador
   rpc ProcessarLeitura (SensorData) returns (ActuatorCommand);
 }
