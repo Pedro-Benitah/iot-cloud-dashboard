@@ -1,49 +1,35 @@
-python3 sensor.py 1 & python3 sensor.py 2 &
-kill %3
-kill %4
-kill %1
-kill %2
-nano sensor.py
-python3 sensor.py 1 & python3 sensor.py 2 &
-kill %2
-kill %1
-nano sensor.py
-nano atuador.py
-python3 sensor.py 1
-python3 sensor.py 2
-python3 sensor.py 1 & python3 sensor.py 2 &
-python3 gateway.py
-python3 atuador.py
-python3 sensor.py 2
-python3 sensor.py 1 & python3 sensor.py 2 &
-jobs
-kill %1
-kill %2
-kill %1
-kill %2
-kill %1
-kill %2
-kill %1
-kill %2
-jobs
-ps aux | grep sensor.py
-kill 12345 12346
-pkill -f "python3 sensor.py"
-ps aux | grep sensor.py
-python3 atuador.py
-pkill -f "sensor.py"
-python3 atuador.py
-nano atuador.py
-ls
-nano sensor.py 
-nano atuador.py
-nano sensor.py 
-nano atuador.py
-python3 atuador.py
-nano atuador.py
-python3 atuador.py
-nano atuador.py
-which nc
-nc -ul 10000
-nano atuador.py
-python3 atuador.py
+sudo apt-get install -y python3-pip
+pip3 install flask pika
+sudo apt update
+sudo add-apt-repository universe
+sudo apt update
+sudo apt install -y software-properties-common
+sudo apt install -y python3-pip
+sudo apt-get install -y python3-pip
+pip3 install flask pika
+sudo apt install -y python3.12-venv
+python3 -m venv venv
+source venv/bin/activate
+pip install grpcio grpcio-tools
+sudo apt-get install -y python3-pip
+pip3 install flask pika
+nano painel.py
+python3 painel.py
+nano painel.py
+python3 painel.py
+nano painel.py
+python3 painel.py
+nano painel.py
+python3 painel.py
+nano painel.py
+python3 painel.py
+nano painel.py
+python3 painel.py
+nano painel.py
+python3 painel.py
+nano painel.py
+python3 painel.py
+source venv/bin/activate
+python3 painel.py
+python3 -m venv venv
+python3 painel.py
