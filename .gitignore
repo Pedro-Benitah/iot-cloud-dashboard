@@ -1,0 +1,8 @@
+.cache/
+.ssh/
+__pycache__/
+venv/
+.bash*
+.profile
+.gitconfig
+.sudo_as_admin_successful
