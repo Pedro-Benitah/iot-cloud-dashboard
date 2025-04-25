@@ -26,8 +26,7 @@ if _version_not_supported:
 
 
 class ControladorAmbienteStub(object):
-    """Serviço gRPC para processar dados de sensor
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -43,12 +42,10 @@ class ControladorAmbienteStub(object):
 
 
 class ControladorAmbienteServicer(object):
-    """Serviço gRPC para processar dados de sensor
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def ProcessarLeitura(self, request, context):
-        """RPC que recebe dados do sensor e retorna um poss\u00edvel comando de atuador
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -70,8 +67,7 @@ def add_ControladorAmbienteServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class ControladorAmbiente(object):
-    """Serviço gRPC para processar dados de sensor
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def ProcessarLeitura(request,
