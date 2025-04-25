@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package smartenv;
+
+
+message SensorData {
+  int32 id = 1;
+  float valor = 2;
+}
+
+
+message ActuatorCommand {
+  int32 id = 1;
+  string acao = 2;
+  bool ativar = 3;
+}
+
+
+service ControladorAmbiente {
+  rpc ProcessarLeitura (SensorData) returns (ActuatorCommand);
+}
