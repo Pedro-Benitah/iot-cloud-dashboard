@@ -1,7 +1,7 @@
-import socket, time, random, sys
+import os, random, socket, sys, time
 
-GATEWAY_IP   = "172.31.94.16"
-GATEWAY_PORT = 9999  # Porta UDP do Gateway
+GATEWAY_IP = os.getenv("GATEWAY_UDP_HOST", "127.0.0.1")
+GATEWAY_PORT = int(os.getenv("GATEWAY_UDP_PORT", "9999"))  # Porta UDP do Gateway
 
 # Permitir definir um ID do sensor via argumento de linha de comando
 sensor_id = 1
