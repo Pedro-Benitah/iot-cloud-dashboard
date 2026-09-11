@@ -1,10 +1,16 @@
 from flask import Flask, render_template_string, Response, request
-import pika, threading, queue, json
+import json, os, pika, threading, queue
 
-# Configuração do RabbitMQ
-RABBITMQ_HOST = "52.70.149.95"
-RABBITMQ_USER = "admin"
-RABBITMQ_PASS = "12345."
+# Configuração via ambiente; não mantenha credenciais no código.
+def required_env(name):
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Defina a variável de ambiente {name}")
+    return value
+
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "127.0.0.1")
+RABBITMQ_USER = required_env("RABBITMQ_USER")
+RABBITMQ_PASS = required_env("RABBITMQ_PASS")
 
 app = Flask(__name__)
 
@@ -139,4 +145,4 @@ TEMPLATE = """
 # Iniciar aplicação e thread
 if __name__ == "__main__":
     threading.Thread(target=consume_sensor_data, daemon=True).start()
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host=os.getenv("WEB_HOST", "127.0.0.1"), port=int(os.getenv("WEB_PORT", "5000")))
