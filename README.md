@@ -1,63 +1,108 @@
 # IoT Cloud Dashboard
 
-Protótipo acadêmico de monitoramento de sensores e controle de atuadores em tempo real. O fluxo combina UDP, gRPC, RabbitMQ, Server-Sent Events e uma interface Flask.
+Protótipo acadêmico de **monitoramento de sensores simulados em tempo real**, com um gateway que integra UDP, gRPC e RabbitMQ. Um painel Flask recebe as leituras por Server-Sent Events (SSE).
 
-## Fluxo
+**Python · Flask · UDP · gRPC/Protobuf · RabbitMQ · SSE**
 
-- Sensor -> UDP -> Gateway
-- Gateway -> gRPC -> Microsserviço
-- Gateway -> RabbitMQ -> Painel web
-- Gateway -> UDP -> Atuador
-- Painel web -> RabbitMQ -> Gateway
+## Arquitetura
 
-## Tecnologias
+```mermaid
+flowchart TD
+    S[Sensor simulado] -->|Leitura por UDP| G[Gateway]
+    G -->|gRPC: ProcessarLeitura| M[Microsserviço de controle]
+    M -->|Resposta com ação| G
+    G -->|UDP: ação ON quando ativar é true| A[Atuador simulado]
+    G -->|Publica leitura| Q[Fila: sensor_data_queue]
+    Q --> P[Painel Flask]
+    P -->|SSE| B[Navegador]
+    B -.->|Solicita ação manual| P
+    P -.->|JSON| C[Fila: commands_queue]
+    C -.->|Formato incompatível no protótipo| G
+```
 
-Python 3, Flask, gRPC/Protobuf, RabbitMQ, UDP, Server-Sent Events (SSE), HTML, CSS, JavaScript e AWS EC2.
+As linhas pontilhadas mostram o caminho de controle manual, que ainda precisa de correção de contrato. O painel publica JSON e o gateway espera texto no formato `id:acao`; o controle manual não está integrado de ponta a ponta.
 
 ## Componentes
 
-- `sensor.py`: simula leituras e as envia por UDP.
-- `gateway.py`: integra UDP, gRPC e RabbitMQ.
-- `microsservico.py`: aplica a regra de controle por gRPC.
-- `atuador.py`: simula o recebimento de comandos UDP.
-- `painel.py`: apresenta leituras por SSE e envia comandos.
-- `controle.proto`: contrato do serviço gRPC.
+| Arquivo | Responsabilidade |
+| --- | --- |
+| [`sensor.py`](sensor.py) | Gera leituras aleatórias e envia UDP a cada cinco segundos. |
+| [`gateway.py`](gateway.py) | Recebe leituras, consulta a regra gRPC e publica mensagens. |
+| [`microsservico.py`](microsservico.py) | Retorna ON se o valor for maior que 30; caso contrário, OFF. |
+| [`atuador.py`](atuador.py) | Recebe e registra comandos UDP, sem controlar hardware real. |
+| [`painel.py`](painel.py) | Exibe leituras por SSE e publica pedidos de controle manual. |
+| [`controle.proto`](controle.proto) | Contrato do serviço gRPC. |
+
+## Preparar o ambiente local
+
+Use Python compatível com as dependências e um RabbitMQ local com um usuário de teste. Na raiz do repositório:
+
+```bash
+python -m venv .venv
+# Linux/macOS
+source .venv/bin/activate
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m pip install pika
+```
+
+`pika` é importado pelo gateway e pelo painel, mas ainda não consta em `requirements.txt`. O arquivo também inclui bibliotecas que não são utilizadas no fluxo principal; a revisão das dependências fica como evolução separada.
 
 ## Configuração
 
-Endpoints e credenciais não ficam no código. Configure-os no ambiente antes de executar:
+Defina estas variáveis em **cada terminal** que executar o gateway ou o painel, substituindo os placeholders pelos valores locais. Não grave a senha em um arquivo versionado.
 
 ```bash
 export RABBITMQ_HOST=127.0.0.1
-export RABBITMQ_USER=SEU_USUARIO
-export RABBITMQ_PASS=SUA_SENHA
-export MICROSERVICE_HOST=127.0.0.1
-export ACTUATOR_UDP_HOST=127.0.0.1
-export GATEWAY_UDP_HOST=127.0.0.1
+export RABBITMQ_USER=USUARIO_LOCAL_DE_TESTE
+export RABBITMQ_PASS=SENHA_LOCAL_DE_TESTE
 ```
 
-Há variáveis opcionais para as portas: `MICROSERVICE_PORT`, `SENSOR_UDP_PORT`, `ACTUATOR_UDP_PORT`, `GATEWAY_UDP_PORT` e `WEB_PORT`. O painel usa `127.0.0.1` por padrão; defina `WEB_HOST` conscientemente se precisar expô-lo.
+No PowerShell, a sintaxe equivalente é `$env:RABBITMQ_HOST='127.0.0.1'`, `$env:RABBITMQ_USER='USUARIO_LOCAL_DE_TESTE'` e `$env:RABBITMQ_PASS='SENHA_LOCAL_DE_TESTE'`.
 
-Nunca use credenciais reais em commits. Se credenciais anteriormente publicadas ainda estiverem ativas, rotacione-as no RabbitMQ e no provedor de nuvem.
+| Variável | Componente que lê | Padrão |
+| --- | --- | --- |
+| `MICROSERVICE_HOST`, `MICROSERVICE_PORT` | Gateway, destino gRPC | `127.0.0.1`, `50051` |
+| `SENSOR_UDP_PORT` | Gateway, porta de entrada UDP | `9999` |
+| `GATEWAY_UDP_HOST`, `GATEWAY_UDP_PORT` | Sensor, destino UDP | `127.0.0.1`, `9999` |
+| `ACTUATOR_UDP_HOST`, `ACTUATOR_UDP_PORT` | Gateway, destino UDP | `127.0.0.1`, `10000` |
+| `WEB_HOST`, `WEB_PORT` | Painel Flask | `127.0.0.1`, `5000` |
 
-## Execução local
+O servidor gRPC usa a porta fixa `50051` e o atuador usa a porta fixa `10000`. Alterar apenas as variáveis do gateway não altera os processos servidores. Mantenha as portas padrão no teste local. Gateway e atuador escutam UDP em todas as interfaces; restrinja o acesso na rede local.
 
-Com RabbitMQ disponível e as variáveis configuradas, abra terminais separados:
+## Execução
+
+Com o broker ativo, abra cinco terminais com o ambiente virtual ativado. Configure as variáveis acima nos terminais do gateway e do painel, depois execute, nesta ordem:
 
 ```bash
-python3 microsservico.py
-python3 atuador.py
-python3 gateway.py
-python3 painel.py
-python3 sensor.py 1
+# Terminal 1
+python microsservico.py
+# Terminal 2
+python atuador.py
+# Terminal 3
+python gateway.py
+# Terminal 4
+python painel.py
+# Terminal 5
+python sensor.py 1
 ```
 
-Acesse `http://127.0.0.1:5000` para visualizar o painel.
+Abra `http://127.0.0.1:5000`. As leituras devem aparecer no painel; o atuador registra comandos no terminal. Os botões de controle manual ainda não são um critério de sucesso por causa da incompatibilidade descrita acima.
 
-## Validação e limitações
+## Validação e limites
 
-O projeto demonstra o fluxo ponta a ponta entre componentes. Ainda não há suíte automatizada, cobertura medida, autenticação da interface, TLS ou garantias de produção. O caminho de comandos manuais permanece um protótipo e deve ser testado e endurecido antes de qualquer uso real.
+Esta documentação foi conferida por leitura dos componentes. Não foi realizada uma nova execução integrada nesta revisão; o repositório não possui uma suíte automatizada nem cobertura medida.
 
-## Escopo
+- O gateway só envia a resposta automática quando `ativar` é verdadeiro; a ação OFF devolvida pelo microsserviço não é encaminhada nesse caminho.
+- As filas não são duráveis; as leituras do painel ficam em memória, sem histórico em banco de dados.
+- O painel usa uma fila SSE compartilhada; múltiplos navegadores podem disputar os eventos.
+- O painel pode descartar uma leitura de valor zero por usar uma seleção baseada em valor verdadeiro na extração da mensagem.
+- Não há autenticação da interface, TLS no gRPC ou garantias de produção.
 
-Projeto educacional desenvolvido em 2025. Não representa um produto de produção nem contém dados de clientes.
+## Próximas evoluções
+
+1. Unificar o contrato de comandos entre painel e gateway e validar ON/OFF.
+2. Organizar dependências e criar testes de integração locais.
+3. Persistir leituras com esquema e timestamp; acrescentar consultas SQL de agregação e verificações de qualidade, como evolução em direção à engenharia de dados.
+
+Projeto educacional, sem hardware ou dados de clientes. Use apenas credenciais locais de teste. Caso alguma credencial de versões anteriores permaneça ativa, revogue-a no provedor. Não exponha este protótipo à internet sem tratar autenticação, transporte e regras de rede.
